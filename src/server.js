@@ -217,20 +217,9 @@ const proxy = {
 	},
 };
 
-const cert = process.env.SIGN_CERT || path.join(__dirname, '..', 'server.crt');
-const key = process.env.SIGN_KEY || path.join(__dirname, '..', 'server.key');
-const options = {
-	key: fs.readFileSync(key),
-	cert: fs.readFileSync(cert),
-};
-
 const server = {
 	http: require('http')
 		.createServer()
-		.on('request', proxy.core.mitm)
-		.on('connect', proxy.core.tunnel),
-	https: require('https')
-		.createServer(options)
 		.on('request', proxy.core.mitm)
 		.on('connect', proxy.core.tunnel),
 };

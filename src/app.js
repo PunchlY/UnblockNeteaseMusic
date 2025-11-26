@@ -5,14 +5,6 @@ const config = require('./cli.js')
 		version: packageJson.version,
 	})
 	.option(['-v', '--version'], { action: 'version' })
-	.option(['-p', '--port'], {
-		metavar: 'http[:https]',
-		help: 'specify server port',
-	})
-	.option(['-a', '--address'], {
-		metavar: 'address',
-		help: 'specify server host',
-	})
 	.option(['-u', '--proxy-url'], {
 		metavar: 'url',
 		help: 'request through upstream proxy',
@@ -45,15 +37,6 @@ const config = require('./cli.js')
 	.option(['-h', '--help'], { action: 'help' })
 	.parse(process.argv);
 
-global.address = config.address;
-config.port = (config.port || '8080:8081')
-	.split(':')
-	.map((string) => parseInt(string));
-const invalid = (value) => isNaN(value) || value < 1 || value > 65535;
-if (config.port.some(invalid)) {
-	console.log('Port must be a number higher than 0 and lower than 65535.');
-	process.exit(1);
-}
 if (config.proxyUrl && !/http(s?):\/\/.+:\d+/.test(config.proxyUrl)) {
 	console.log('Please check the proxy url.');
 	process.exit(1);
@@ -94,7 +77,6 @@ const logger = logScope('app');
 const random = (array) => array[Math.floor(Math.random() * array.length)];
 const target = Array.from(hook.target.host);
 
-global.port = config.port;
 global.proxy = config.proxyUrl ? parse(config.proxyUrl) : null;
 global.hosts = target.reduce(
 	(result, host) => Object.assign(result, { [host]: config.forceHost }),
@@ -168,20 +150,11 @@ Promise.all(
 		server.whitelist = server.whitelist.concat(
 			Array.from(host).map(escape)
 		);
-		const log = (type) =>
-			logger.info(
-				`${['HTTP', 'HTTPS'][type]} Server running @ http://${
-					address || '0.0.0.0'
-				}:${port[type]}`
-			);
-		if (port[0])
-			server.http
-				.listen(port[0], address)
-				.once('listening', () => log(0));
-		if (port[1])
-			server.https
-				.listen(port[1], address)
-				.once('listening', () => log(1));
+		server.http
+			.listen({ fd: 3 })
+			.once('listening', () => {
+				logger.info('Socket Server running');
+			});
 		if (cnrelay) logger.info(`CNRelay: ${cnrelay}`);
 	})
 	.catch((error) => {
