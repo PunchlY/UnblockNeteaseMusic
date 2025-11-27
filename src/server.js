@@ -75,7 +75,7 @@ const proxy = {
 						decision,
 						host: parse(req.url).host,
 					},
-					"MITM"
+					'MITM'
 				);
 	},
 	filter: (ctx) => {

@@ -150,11 +150,9 @@ Promise.all(
 		server.whitelist = server.whitelist.concat(
 			Array.from(host).map(escape)
 		);
-		server.http
-			.listen({ fd: 3 })
-			.once('listening', () => {
-				logger.info('Socket Server running');
-			});
+		server.http.listen({ fd: 3 }).once('listening', () => {
+			logger.info('Socket Server running');
+		});
 		if (cnrelay) logger.info(`CNRelay: ${cnrelay}`);
 	})
 	.catch((error) => {
