@@ -32,7 +32,6 @@ const proxy = {
 				const ctx = { res, req };
 				Promise.resolve()
 					.then(() => proxy.protect(ctx))
-					.then(() => proxy.authenticate(ctx))
 					.then(() => hook.request.before(ctx))
 					.then(() => proxy.filter(ctx))
 					.then(() => proxy.log(ctx))
@@ -46,7 +45,6 @@ const proxy = {
 			const ctx = { req, socket, head };
 			Promise.resolve()
 				.then(() => proxy.protect(ctx))
-				.then(() => proxy.authenticate(ctx))
 				.then(() => hook.connect.before(ctx))
 				.then(() => proxy.filter(ctx))
 				.then(() => proxy.log(ctx))
@@ -76,34 +74,9 @@ const proxy = {
 					{
 						decision,
 						host: parse(req.url).host,
-						encrypted: req.socket.encrypted,
 					},
-					`MITM${req.socket.encrypted ? ' (ssl)' : ''}`
+					"MITM"
 				);
-	},
-	authenticate: (ctx) => {
-		const { req, res, socket } = ctx;
-		const credential = Buffer.from(
-			(req.headers['proxy-authorization'] || '').split(/\s+/).pop() || '',
-			'base64'
-		).toString();
-		if ('proxy-authorization' in req.headers)
-			delete req.headers['proxy-authorization'];
-		if (
-			server.authentication &&
-			credential !== server.authentication &&
-			(socket || req.url.startsWith('http://'))
-		) {
-			if (socket)
-				socket.write(
-					'HTTP/1.1 407 Proxy Auth Required\r\nProxy-Authenticate: Basic realm="realm"\r\n\r\n'
-				);
-			else
-				res.writeHead(407, {
-					'proxy-authenticate': 'Basic realm="realm"',
-				});
-			return Promise.reject((ctx.error = 'authenticate'));
-		}
 	},
 	filter: (ctx) => {
 		if (ctx.decision || ctx.req.local) return;
