@@ -118,12 +118,12 @@ const domainList = [
 
 hook.request.before = (ctx) => {
 	const { req } = ctx;
-	req.url = 'https://' +
-				(domainList.some((domain) =>
-					(req.headers.host || '').includes(domain)
-				)
-					? req.headers.host
-					: null) + req.url;
+	req.url =
+		'https://' +
+		(domainList.some((domain) => (req.headers.host || '').includes(domain))
+			? req.headers.host
+			: null) +
+		req.url;
 	const url = parse(req.url);
 	if (
 		[url.hostname, req.headers.host].some((host) =>
